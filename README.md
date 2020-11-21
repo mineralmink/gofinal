@@ -18,18 +18,22 @@ Customer Profile System contains customer information which are
 - status
 
 To run with your own Database environment, please use the following command
-```python
+```go
 set "DATABASE_URL=<YOUR_DATABASE_URL>" go run server.go
+```
+And for testing the API integration, run the following command parallel with the server.go
+```go
+go test -v server_test.go
 ```
 
 This file contains following API
 To get all customer information or individual customer information
-```python
+```api
 GET http:localhost:2009/customers 
 GET http:localhost:2009/customers/<customer id>
 ```
 To create new customer
-```python
+```api
 POST http:localhost:2009/customers
 ```
 with the example body
