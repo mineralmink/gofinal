@@ -4,7 +4,7 @@ Customer Profile System API
 
 ## Installation
 
-Download [Go](https://golang.org/doc/install) and check GO version
+Download [Go](https://golang.org/doc/install) and check Go version
 
 ```bash
 go version
