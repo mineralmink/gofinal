@@ -87,6 +87,37 @@ func getCustomerById(c *gin.Context) {
 	c.JSON(http.StatusOK, customer)
 }
 
+func updateCustomerHandler(c *gin.Context) {
+	var customer Customer
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	if err := c.ShouldBindJSON(&customer); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	customer.ID = id
+	_, err = updateCustomerInfo(customer)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, customer)
+}
+
+func deleteCustomerHandler(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+	err = deleteCustomer(id)
+	c.JSON(http.StatusOK, gin.H{"message": "customer deleted"})
+}
+
 func insertNewCustomer(c Customer) (Customer, error) {
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -167,10 +198,49 @@ func queryByID(rowId int) (Customer, error) {
 
 }
 
+func updateCustomerInfo(customer Customer) (Customer, error) {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Connect to database error", err)
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare("UPDATE customers SET name=$2,email=$3,status=$4 where id=$1")
+	if err != nil {
+		return Customer{}, fmt.Errorf("can't prepare statement update")
+	}
+	if _, err := stmt.Exec(customer.ID, customer.Name, customer.Email, customer.Status); err != nil {
+		return Customer{}, fmt.Errorf("error execite update %s", err)
+	}
+	fmt.Println("update success")
+
+	return customer, nil
+}
+
+func deleteCustomer(id int) error {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Connect to database error", err)
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare("DELETE FROM customers where id=$1")
+
+	if err != nil {
+		return fmt.Errorf("can't prepare statement delete %s", err)
+	}
+	if _, err := stmt.Exec(id); err != nil {
+		return fmt.Errorf("error execute delete %s", err)
+	}
+	fmt.Println("delete success")
+	return nil
+}
 func main() {
 	r := gin.Default()
 	r.GET("/customers", getAllCustomersHandler)
 	r.GET("/customers/:id", getCustomerById)
 	r.POST("/customers", createCustomerHandler)
+	r.PUT("/customers/:id", updateCustomerHandler)
+	r.DELETE("/customers/:id", deleteCustomerHandler)
 	r.Run(":2009")
 }
