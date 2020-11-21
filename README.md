@@ -21,7 +21,7 @@ To run with your own Database environment, please use the following command
 ```go
 set "DATABASE_URL=<YOUR_DATABASE_URL>" go run server.go
 ```
-And for testing the API integration, run the following command parallel with the server.go
+And for testing the API integration, run the following command parallel with server.go
 ```go
 go test -v server_test.go
 ```
