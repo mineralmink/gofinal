@@ -26,11 +26,8 @@ func Conn() *sql.DB {
 	}
 	return db
 }
-func createDatabase() {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Connect to database error", err)
-	}
+func createDatabase() error {
+	db := Conn()
 	defer db.Close()
 
 	createTb := `
@@ -41,15 +38,13 @@ func createDatabase() {
 		status TEXT
 	);
 	`
-	_, err = db.Exec(createTb)
+	_, err := db.Exec(createTb)
 
 	if err != nil {
-		log.Fatal("can't create table", err)
+		return fmt.Errorf("can't create table %s", err)
 	}
 
-	fmt.Println("create table success")
-
-	fmt.Println("okay")
+	return nil
 }
 
 func createCustomerHandler(c *gin.Context) {
@@ -112,7 +107,7 @@ func updateCustomerHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, customer)
+	c.JSON(http.StatusOK, customer)
 }
 
 func deleteCustomerHandler(c *gin.Context) {
@@ -228,6 +223,9 @@ func deleteCustomer(id int) error {
 	return nil
 }
 func main() {
+	if err := createDatabase(); err != nil {
+		log.Fatal("Create database error", err)
+	}
 	r := gin.Default()
 	r.GET("/customers", getAllCustomersHandler)
 	r.GET("/customers/:id", getCustomerByIDHandler)
