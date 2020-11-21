@@ -36,7 +36,7 @@ To create new customer
 ```api
 POST http:localhost:2009/customers
 ```
-with the example body
+with an example body
 ```json
 {
     "name": "ekkaffwat",
@@ -48,7 +48,7 @@ To update specific customer information
 ```api
 PUT http:localhost:2009/customers/<customer id>
 ```
-with the example body
+with an example body
 ```json
 {
     "name": "newname",
@@ -58,7 +58,7 @@ with the example body
 ```
 
 To delete customer according to their ID
-```python
+```api
 DELETE http:localhost:2009/customers/<customer id>
 ```
 
