@@ -19,6 +19,13 @@ type Customer struct {
 	Status string `json:"status"`
 }
 
+func Conn() *sql.DB {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Connect to database error", err)
+	}
+	return db
+}
 func createDatabase() {
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -70,7 +77,7 @@ func getAllCustomersHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, customers)
 }
 
-func getCustomerById(c *gin.Context) {
+func getCustomerByIDHandler(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
@@ -119,15 +126,12 @@ func deleteCustomerHandler(c *gin.Context) {
 }
 
 func insertNewCustomer(c Customer) (Customer, error) {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Connect to database error", err)
-	}
+	db := Conn()
 	defer db.Close()
 
 	row := db.QueryRow("INSERT INTO customers (name,email,status) values($1,$2,$3) RETURNING id", c.Name, c.Email, c.Status)
 	var id int
-	err = row.Scan(&id)
+	err := row.Scan(&id)
 	if err != nil {
 		return Customer{}, fmt.Errorf("can't scan id %s", err)
 	}
@@ -139,10 +143,7 @@ func insertNewCustomer(c Customer) (Customer, error) {
 
 func queryAllCustomer() ([]Customer, error) {
 	var customers []Customer
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Connect to database error", err)
-	}
+	db := Conn()
 	defer db.Close()
 
 	stmt, err := db.Prepare("SELECT id,name,email,status FROM customers")
@@ -172,10 +173,7 @@ func queryAllCustomer() ([]Customer, error) {
 }
 
 func queryByID(rowId int) (Customer, error) {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Connect to database error", err)
-	}
+	db := Conn()
 	defer db.Close()
 
 	stmt, err := db.Prepare("SELECT id, name, email, status FROM customers where id=$1")
@@ -199,10 +197,7 @@ func queryByID(rowId int) (Customer, error) {
 }
 
 func updateCustomerInfo(customer Customer) (Customer, error) {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Connect to database error", err)
-	}
+	db := Conn()
 	defer db.Close()
 
 	stmt, err := db.Prepare("UPDATE customers SET name=$2,email=$3,status=$4 where id=$1")
@@ -218,10 +213,7 @@ func updateCustomerInfo(customer Customer) (Customer, error) {
 }
 
 func deleteCustomer(id int) error {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Connect to database error", err)
-	}
+	db := Conn()
 	defer db.Close()
 
 	stmt, err := db.Prepare("DELETE FROM customers where id=$1")
@@ -238,7 +230,7 @@ func deleteCustomer(id int) error {
 func main() {
 	r := gin.Default()
 	r.GET("/customers", getAllCustomersHandler)
-	r.GET("/customers/:id", getCustomerById)
+	r.GET("/customers/:id", getCustomerByIDHandler)
 	r.POST("/customers", createCustomerHandler)
 	r.PUT("/customers/:id", updateCustomerHandler)
 	r.DELETE("/customers/:id", deleteCustomerHandler)
